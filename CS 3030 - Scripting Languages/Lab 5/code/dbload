@@ -1,0 +1,68 @@
+#!/usr/bin/python
+# Mick Zeller
+# Lab 5 - SQLite3 and CSV
+# CS3030 - Scripting
+
+
+import sqlite3
+import csv
+import sys
+import random
+
+if len(sys.argv) != 3:
+	print("Usage: dbload CSVFILE DATABASEFILE")
+	exit(1)
+
+
+
+try:
+	input_csv_file = str(sys.argv[1])
+except:
+	print("Error")
+	exit(1)
+
+try:
+	database_file = str(sys.argv[2])
+except:
+	print("Error")
+	exit(1)
+
+
+
+conn = sqlite3.connect(database_file)
+curs = conn.cursor()
+
+
+#create classes table
+curs.execute('''DROP TABLE IF EXISTS classes''')
+curs.execute('''CREATE TABLE classes
+	(id TEXT, subjcode TEXT, coursenumber TEXT, termcode TEXT)''')
+
+
+#create students table
+curs.execute('''DROP TABLE IF EXISTS students''')
+curs.execute('''CREATE TABLE students
+	(id TEXT PRIMARY KEY UNIQUE, lastname TEXT, firstname TEXT, major TEXT, email TEXT, city TEXT, state TEXT, zip TEXT)''')
+
+reader = csv.reader(open(input_csv_file, 'r'), delimiter=',', quotechar='"')
+counter = 0
+for row in reader:
+	counter += 1
+	if counter == 1:
+		continue
+
+	word = row[5].split(" ")
+	c = (row[0], word[0], word[1], row[6])
+
+	curs.execute('''insert into classes (id, subjcode, coursenumber, termcode)
+			values (?,?,?,?)''', c)
+
+	if not curs.execute('''SELECT id FROM students WHERE id = "%s"''' % row[0]).fetchone():
+		s = (row[0], row[2], row[1], row[4], row[3], row[7], row[8], row[9])
+		curs.execute('''insert into students (id, lastname, firstname, major, email, city, state, zip)
+			values (?,?,?,?,?,?,?,?)''', s)
+
+
+conn.commit()
+
+exit(0)

@@ -1,0 +1,98 @@
+#!/usr/bin/python
+# Mick Zeller
+# Lab 6 - Filemaker
+# CS3030 - Scripting
+
+
+import sys
+import random
+import shlex
+
+#parameter check
+if len(sys.argv) != 4:
+	print("Usage: ./filemaker <INPUTCOMMANDFILE> <OUTPUTFILE> <RECORDCOUNT>")
+	exit(1)
+
+#store parameters in usable variables
+inputfile = sys.argv[1]
+outputfile = sys.argv[2]
+recordcount = sys.argv[3]
+
+try:
+	recordcount = int(recordcount)
+except:
+	print("Error")
+	exit(1)
+
+
+try:
+    inputFile =open(inputfile, 'r')
+except:
+	print("Error with opening input file")
+	exit(1)
+
+try:
+	outputFile = open(outputfile, 'w')
+
+except:
+	print("Error with opening output file")
+	exit(1)
+
+
+#slurping commands into a commands list
+
+cmdList = inputFile.readlines()
+header = shlex.split(cmdList[0])
+#declaring dictionary
+randomFiles = {}
+
+#conditional statements
+if header[0] == "HEADER":
+	outputFile.write(header[1].decode('string_escape'))
+
+#slurping files into randomFiles
+for i in range(len(cmdList)):
+	cmd = shlex.split(cmdList[i])
+	if cmd[0] == "FILEWORD":
+		inFile = open(cmd[2], 'r')
+		randomFiles[cmd[2]] = inFile.readlines()
+inFile.close()
+
+#printing randomFiles
+
+
+randomData = {}
+for i in range(recordcount):
+	randomData = {}
+	for c in range(len(cmdList)):
+		cmd = shlex.split(cmdList[c])
+		if cmd[0] == "STRING":
+			outputFile.write(cmd[1].decode('string_escape'))
+		if cmd[0] == "FILEWORD":
+			label = cmd[1]
+			if label in randomData:
+				print "Error - key exists"
+				exit(1)
+			else:
+				randWord = randomFiles[cmd[2]][random.randint(0, len(randomFiles[cmd[2]])-1)]
+				randWord = randWord.rstrip()
+				randomData[cmd[1]] = randWord
+				outputFile.write(randomData[cmd[1]])
+		if cmd[0] == "NUMBER":
+			label = cmd[1]
+			minNum = int(cmd[2])
+			maxNum = int(cmd[3])
+			if label in randomData:
+				print "Error - key exists"
+				exit(1)
+			else:
+				randNum = random.randint(minNum, maxNum)
+				randomData[cmd[1]] = str(randNum)
+				outputFile.write(randomData[cmd[1]])
+		if cmd[0] == "REFER":
+			label = cmd[1]
+			outputFile.write(randomData[label])
+exit(0)
+
+
+  
